@@ -5,33 +5,38 @@
 // access GAS --- JSON"P"
 
 
-// JSONPでアクセス完了時に以下を実行し、タイムアウト待ち解除
+// タイムアウト待ち解除はcallback関数内で以下を実行
+//   AccessSuccessCheckList[key] = null;
 // keyはcallbackとしてサーバから返してもらうこと
-//
-// AccessSuccessCheckList[key] = null;
+function callback(data:any, key:string){
+    AccessSuccessCheckList[key] = null;
+}
 
 
 // JSONPでアクセス中のリスト
+// レスポンスタイムアウトをチェックする
 var AccessSuccessCheckList:  { [key: string]: string; } = {};
 
+// JSONPでアクセスする関数
 function accessByJSONP(url:string, errfunc: Function):void{
     console.log(">> Call access");
     console.log(" URL " +url);
 
-    const key = getUniqueStr();
+    const key = createUniqueStr();
     console.log(" key created by AccessSuccessCheckList ["+key+"]");
 
-    const script: JQuery = $("<script></script>");
-    script.attr("src", url+"&key="+key);
-    $(document.head).append(script);
+    const script: HTMLScriptElement = document.createElement("script");
+    script.src = url+"&key="+key; //一意となるkeyを勝手に追加
+    document.head.appendChild(script);
 
     AccessSuccessCheckList[key] = url;
     console.log(" access key ["+key+"]");
     console.log(" access url ["+AccessSuccessCheckList[key]+"]");
 
-    script.on("error", function(): void{
+    script.onerror = function(e) {
+        console.log(" Error on accessByJSONP");
         errfunc();
-    });
+    };
 
     //呼び出しタイムアウトした場合の処理
     window.setTimeout(function(e){
@@ -57,7 +62,7 @@ function accessByJSONP(url:string, errfunc: Function):void{
         }
     }
 
-    function getUniqueStr(myStrong?: number): string {
+    function createUniqueStr(myStrong?: number): string {
         //let strong = 1000;//copy元
         let strong = 100;
         if (myStrong) strong = myStrong;
@@ -67,4 +72,5 @@ function accessByJSONP(url:string, errfunc: Function):void{
         );
     }
 }
+
 
